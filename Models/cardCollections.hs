@@ -48,13 +48,13 @@ deal :: TableState -> TableState
 deal ts =
   case ts of
     TableState NoTableCards deck ->
-      TableState (PostFlop $ flopDeck deck) $ drop 3 deck
-    TableState (PostFlop flop) deck ->
-      TableState (PostTurn $ Turn flop (head deck)) $ drop 1 deck
-    TableState (PostTurn turn) deck ->
-      TableState (PostRiver $ River turn (head deck)) $ drop 1 deck
+      TableState (arrangeTableCards $ take 3 deck) $ drop 3 deck
+    TableState flopOrTurn deck -> dealOne flopOrTurn deck
   where
-    flopDeck deck = Flop (head deck) (deck !! 1) (deck !! 2)
+    dealOne tableCards deck =
+      TableState
+        (arrangeTableCards $ sequenceTableCards tableCards ++ [head deck]) $
+      drop 1 deck
 
 arrangeTableCards :: [Card] -> TableCards
 arrangeTableCards cards
@@ -65,3 +65,11 @@ arrangeTableCards cards
   | length cards == 5 =
     PostRiver $ River (turn . arrangeTableCards $ take 4 cards) (cards !! 4)
   | otherwise = NoTableCards
+
+sequenceTableCards :: TableCards -> [Card]
+sequenceTableCards tableCards =
+  case tableCards of
+    NoTableCards              -> []
+    PostFlop (Flop c1 c2 c3)  -> [c1, c2, c3]
+    PostTurn (Turn flop c4)   -> sequenceTableCards (PostFlop flop) ++ [c4]
+    PostRiver (River turn c5) -> sequenceTableCards (PostTurn turn) ++ [c5]
