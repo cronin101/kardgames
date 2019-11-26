@@ -1,6 +1,6 @@
-module CardTypesTests where
+module CardsTests where
 
-import           CardTypes
+import           Models.Cards
 import           Test.HUnit
 
 tests =

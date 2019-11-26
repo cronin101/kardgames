@@ -1,4 +1,4 @@
-module CardTypes where
+module Models.Cards where
 
 data Rank
   = Two
