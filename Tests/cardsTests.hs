@@ -22,7 +22,7 @@ tests =
     [ TestLabel "Ten is greater than Nine" $
       TestCase $ assert $ tenOfSpades > nineOfSpades
     , TestLabel "Ten is equal to Ten, regardless of suit" $
-      TestCase $ assert $ tenOfSpades == tenOfHearts
+      TestCase $ assert $ compare tenOfSpades tenOfHearts == EQ
     , TestLabel "Dealing turns an empty table into a flop" $
       TestCase $
       assertEqual
@@ -61,27 +61,6 @@ tests =
               , tenOfClubs
               ])
            [])
-    , TestLabel "We can detect the largest number of same-value cards :: 1 card" $
-      TestCase $
-      assertEqual
-        "One card"
-        (findHighestCountOfSameRank [tenOfSpades])
-        (1 `CardsOfValue` Rank Ten)
-    , TestLabel
-        "We can detect the largest number of same-value cards :: 2 cards" $
-      TestCase $
-      assertEqual
-        "Two cards"
-        (findHighestCountOfSameRank [tenOfSpades, tenOfClubs])
-        (2 `CardsOfValue` Rank Ten)
-    , TestLabel
-        "We can detect the largest number of same-value cards :: 2 cards with noise" $
-      TestCase $
-      assertEqual
-        "Two cards with noise"
-        (findHighestCountOfSameRank
-           [tenOfSpades, nineOfSpades, tenOfClubs, aceOfSpades])
-        (2 `CardsOfValue` Rank Ten)
     , TestLabel "Single cards are scored on value" $
       TestCase $
       assert $ 1 `CardsOfValue` Rank Two < 1 `CardsOfValue` Rank Three

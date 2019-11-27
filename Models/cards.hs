@@ -39,10 +39,4 @@ data Card =
     { suit  :: Suit
     , value :: CardValue
     }
-  deriving (Show, Read)
-
-instance Ord Card where
-  compare a b = compare (value a) (value b)
-
-instance Eq Card where
-  a == b = value a == value b
+  deriving (Show, Read, Ord, Eq)
