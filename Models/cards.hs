@@ -31,6 +31,9 @@ data Suit
   | Club
   deriving (Eq, Show, Read, Enum, Bounded)
 
+instance Ord Suit where
+  compare a b = EQ
+
 data Card =
   Card
     { suit  :: Suit

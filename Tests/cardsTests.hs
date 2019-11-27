@@ -2,6 +2,7 @@ module CardsTests where
 
 import           Models.CardCollections
 import           Models.Cards
+import           Models.Hands
 import           Test.HUnit
 
 tenOfSpades = Card Spade (Rank Ten)
@@ -13,6 +14,8 @@ tenOfDiamonds = Card Diamond (Rank Ten)
 tenOfClubs = Card Club (Rank Ten)
 
 nineOfSpades = Card Spade (Rank Nine)
+
+aceOfSpades = Card Spade (Face Ace)
 
 tests =
   TestList
@@ -58,6 +61,19 @@ tests =
               , tenOfClubs
               ])
            [])
+    , TestLabel "We can detect the largest number of same-value cards :: 1 card" $
+      TestCase $ assertEqual "One card" (maxCountOfAnyRank [tenOfSpades]) 1
+    , TestLabel
+        "We can detect the largest number of same-value cards :: 2 cards" $
+      TestCase $
+      assertEqual "Two cards" (maxCountOfAnyRank [tenOfSpades, tenOfClubs]) 2
+    , TestLabel
+        "We can detect the largest number of same-value cards :: 2 cards with noise" $
+      TestCase $
+      assertEqual
+        "Two cards with noise"
+        (maxCountOfAnyRank [tenOfSpades, nineOfSpades, tenOfClubs, aceOfSpades])
+        2
     ]
 
 main = runTestTT tests
