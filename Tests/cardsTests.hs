@@ -129,6 +129,45 @@ tests =
     , TestLabel "Higher straight flush beats straight flush" $
       TestCase $
       assert $ StraightFlush Heart (Face Ace) > StraightFlush Heart (Face King)
+    , TestLabel "It can recognise an Ace high straight" $
+      TestCase $
+      assertEqual
+        "Ace high straight"
+        (head
+           (makeStraights
+              [ Card Heart $ Face King
+              , Card Spade $ Face Ace
+              , Card Diamond $ Face Queen
+              , Card Spade $ Face Jack
+              , Card Spade $ Rank Ten
+              ]))
+        (Straight (Face Ace))
+    , TestLabel "It can recognise an Ace low straight" $
+      TestCase $
+      assertEqual
+        "Ace low straight"
+        (head
+           (makeStraights
+              [ Card Heart $ Rank Two
+              , Card Spade $ Face Ace
+              , Card Diamond $ Rank Four
+              , Card Spade $ Rank Five
+              , Card Spade $ Rank Three
+              ]))
+        (Straight (Rank Five))
+    , TestLabel "It can recognise a straight flush" $
+      TestCase $
+      assertEqual
+        "straight flush"
+        (head
+           (makeStraights
+              [ Card Heart $ Face King
+              , Card Heart $ Face Ace
+              , Card Heart $ Face Queen
+              , Card Heart $ Face Jack
+              , Card Heart $ Rank Ten
+              ]))
+        (StraightFlush Heart (Face Ace))
     ]
 
 main = runTestTT tests

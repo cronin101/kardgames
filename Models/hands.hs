@@ -51,6 +51,33 @@ data Hand
       }
   deriving (Eq, Ord, Show, Read)
 
+makeRuns :: [Card] -> [[Card]]
+makeRuns cards = foldr growOrSplit [[]] (descendingCards ++ acesLow)
+  where
+    acesLow = filter ((Face Ace ==) . value) descendingCards
+    descendingCards = sortOn Data.Ord.Down cards
+    growOrSplit e r
+      | null $ head r = [[e]]
+      | endValue == startValue || endValue == succCard startValue =
+        (e : head r) : tail r
+      | otherwise = [e] : r
+      where
+        endValue = value e
+        startValue = value $ head $ head r
+
+makeStraights :: [Card] -> [Hand]
+makeStraights cards =
+  map makeStraightOrStraightFlush $ filter ((>= 5) . length) (makeRuns cards)
+  where
+    makeStraightOrStraightFlush :: [Card] -> Hand
+    makeStraightOrStraightFlush run
+      | length groupedByFlush == 5 =
+        StraightFlush (suit $ head groupedByFlush) (value $ head groupedByFlush)
+      | otherwise = Straight (value $ head run)
+      where
+        groupedByFlush = sortOn Data.Ord.Down $ head (groupBy equalSuit run)
+        equalSuit x y = suit x == suit y
+
 descendingStrengthCardsOfValue :: [Card] -> [CardsOfValue]
 descendingStrengthCardsOfValue =
   map toCardsOfValue . group . sortOn Data.Ord.Down

@@ -24,6 +24,13 @@ data CardValue
   | Face Face
   deriving (Eq, Ord, Show, Read)
 
+succCard (Rank Ten) = Face Jack
+succCard (Face Ace) = Rank Two
+succCard v =
+  case v of
+    Rank r -> Rank (succ r)
+    Face f -> Face (succ f)
+
 data Suit
   = Heart
   | Diamond
