@@ -1,6 +1,7 @@
 module Models.Hands where
 
 import           Data.List
+import           Data.Ord
 import           Models.Cards
 
 data Pair =
@@ -58,8 +59,8 @@ data Hand
       { cards :: [Card]
       }
   | Flush
-      { suit  :: Suit
-      , cards :: [Card]
+      { flushSuit :: Suit
+      , cards     :: [Card]
       }
   | FullHouse
       { threeOfAKind :: ThreeOfAKind
@@ -71,8 +72,8 @@ data Hand
       , cards       :: [Card]
       }
   | StraightFlush
-      { suit  :: Suit
-      , cards :: [Card]
+      { flushSuit :: Suit
+      , cards     :: [Card]
       }
   deriving (Eq, Ord, Show, Read)
 
@@ -83,7 +84,7 @@ findHighestCountOfValue cards
     snd $
     foldl checkForRunIncrease (initialCountOfValue, initialCountOfValue) sorted
   where
-    sorted = sort cards
+    sorted = sortOn Data.Ord.Down cards
     initialCountOfValue = CountOfValue 0 (value (head sorted))
     checkForRunIncrease (CountOfValue count countedValue, maxCountOfValue) nextCard
       | countedValue == value nextCard =
@@ -91,3 +92,42 @@ findHighestCountOfValue cards
       | otherwise = (CountOfValue 1 (value nextCard), maxCountOfValue)
       where
         nextCountWhenMatching = CountOfValue (count + 1) countedValue
+
+scoreHandByKind :: [Card] -> Hand
+scoreHandByKind cards
+  | highestCountOfValue <= CountOfValue 1 (Face Ace) = HighCard cards
+  | highestCountOfValue >= CountOfValue 4 (Rank Two) =
+    FourOfAKindHand (asFourOfAKind highestCountOfValue) cards
+  | highestCountOfValue >= CountOfValue 3 (Rank Two) =
+    scoreThreeOfAKindOrFullHouse highestCountOfValue cards
+  | highestCountOfValue >= CountOfValue 2 (Rank Two) =
+    scorePairOrTwoPair highestCountOfValue cards
+  where
+    scoreThreeOfAKindOrFullHouse highestCount@(CountOfValue _ countedValue) cards =
+      case scoreHandByKind (filter ((countedValue /=) . value) cards) of
+        PairHand pair cards ->
+          FullHouse (asThreeOfAKind highestCount) pair cards
+        _ -> ThreeOfAKindHand (asThreeOfAKind highestCount) cards
+    scorePairOrTwoPair highestCount@(CountOfValue _ countedValue) cards =
+      case scoreHandByKind (filter ((countedValue /=) . value) cards) of
+        PairHand pair cards -> TwoPairHand (asPair highestCount) pair cards
+        _                   -> PairHand (asPair highestCount) cards
+    highestCountOfValue = findHighestCountOfValue cards
+    asFourOfAKind (CountOfValue _ value) =
+      FourOfAKind
+        value
+        (head matchingSuits)
+        (matchingSuits !! 1)
+        (matchingSuits !! 2)
+        (matchingSuits !! 3)
+    asThreeOfAKind (CountOfValue _ value) =
+      ThreeOfAKind
+        value
+        (head matchingSuits)
+        (matchingSuits !! 1)
+        (matchingSuits !! 2)
+    asPair (CountOfValue _ value) =
+      Pair value (head matchingSuits) (matchingSuits !! 1)
+    matchingSuitsForHighestCount (CountOfValue count countedValue) =
+      map suit $ filter (\card -> value card == countedValue) cards
+    matchingSuits = matchingSuitsForHighestCount highestCountOfValue
