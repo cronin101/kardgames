@@ -5,129 +5,103 @@ import           Data.Ord
 import           Models.Cards
 
 data Pair =
-  Pair CardValue Suit Suit
+  Pair CardValue (Suit, Suit)
   deriving (Eq, Show, Read)
 
 instance Ord Pair where
-  compare (Pair valueA _ _) (Pair valueB _ _) = compare valueA valueB
+  compare (Pair valueA _) (Pair valueB _) = compare valueA valueB
 
 data ThreeOfAKind =
-  ThreeOfAKind CardValue Suit Suit Suit
+  ThreeOfAKind CardValue (Suit, Suit, Suit)
   deriving (Eq, Show, Read)
 
 instance Ord ThreeOfAKind where
-  compare (ThreeOfAKind valueA _ _ _) (ThreeOfAKind valueB _ _ _) =
+  compare (ThreeOfAKind valueA _) (ThreeOfAKind valueB _) =
     compare valueA valueB
 
-data FourOfAKind =
-  FourOfAKind CardValue Suit Suit Suit Suit
-  deriving (Eq, Show, Read)
-
-instance Ord FourOfAKind where
-  compare (FourOfAKind valueA _ _ _ _) (FourOfAKind valueB _ _ _ _) =
-    compare valueA valueB
-
-data CountOfValue =
-  CountOfValue
+data CardsOfValue =
+  CardsOfValue
     { count        :: Integer
     , countedValue :: CardValue
     }
-  deriving (Eq, Show, Read)
-
-instance Ord CountOfValue where
-  compare (CountOfValue countA _) (CountOfValue countB _) =
-    compare countA countB
+  deriving (Eq, Show, Read, Ord)
 
 data Hand
   = HighCard
-      { cards :: [Card]
+      { highCard :: CardValue
       }
-  | PairHand
-      { pair  :: Pair
-      , cards :: [Card]
+  | PairH
+      { pair :: Pair
       }
-  | TwoPairHand
+  | TwoPairH
       { bestPair   :: Pair
       , secondPair :: Pair
-      , cards      :: [Card]
       }
-  | ThreeOfAKindHand
+  | ThreeOfAKindH
       { threeOfAKind :: ThreeOfAKind
-      , cards        :: [Card]
       }
   | Straight
-      { cards :: [Card]
+      { highCard :: CardValue
       }
   | Flush
       { flushSuit :: Suit
-      , cards     :: [Card]
+      , highCard  :: CardValue
       }
   | FullHouse
       { threeOfAKind :: ThreeOfAKind
       , pair         :: Pair
-      , cards        :: [Card]
       }
-  | FourOfAKindHand
-      { fourOfAKind :: FourOfAKind
-      , cards       :: [Card]
-      }
+  | FourOfAKind CardValue
   | StraightFlush
       { flushSuit :: Suit
-      , cards     :: [Card]
+      , highCard  :: CardValue
       }
   deriving (Eq, Ord, Show, Read)
 
-findHighestCountOfValue :: [Card] -> CountOfValue
-findHighestCountOfValue cards
-  | null cards = CountOfValue 0 (Face Ace)
+findHighestCountOfSameRank :: [Card] -> CardsOfValue
+findHighestCountOfSameRank cards
+  | null cards = 0 `CardsOfValue` Face Ace
   | otherwise =
     snd $
     foldl checkForRunIncrease (initialCountOfValue, initialCountOfValue) sorted
   where
     sorted = sortOn Data.Ord.Down cards
-    initialCountOfValue = CountOfValue 0 (value (head sorted))
-    checkForRunIncrease (CountOfValue count countedValue, maxCountOfValue) nextCard
-      | countedValue == value nextCard =
+    initialCountOfValue = 0 `CardsOfValue` value (head sorted)
+    checkForRunIncrease (c `CardsOfValue` v, maxCountOfValue) nextCard
+      | v == value nextCard =
         (nextCountWhenMatching, max maxCountOfValue nextCountWhenMatching)
-      | otherwise = (CountOfValue 1 (value nextCard), maxCountOfValue)
+      | otherwise = (1 `CardsOfValue` value nextCard, maxCountOfValue)
       where
-        nextCountWhenMatching = CountOfValue (count + 1) countedValue
+        nextCountWhenMatching = (c + 1) `CardsOfValue` v
 
-scoreHandByKind :: [Card] -> Hand
-scoreHandByKind cards
-  | highestCountOfValue <= CountOfValue 1 (Face Ace) = HighCard cards
-  | highestCountOfValue >= CountOfValue 4 (Rank Two) =
-    FourOfAKindHand (asFourOfAKind highestCountOfValue) cards
-  | highestCountOfValue >= CountOfValue 3 (Rank Two) =
-    scoreThreeOfAKindOrFullHouse highestCountOfValue cards
-  | highestCountOfValue >= CountOfValue 2 (Rank Two) =
-    scorePairOrTwoPair highestCountOfValue cards
+getHighCard :: [Card] -> Card
+getHighCard = head . sortOn Data.Ord.Down
+
+scoreHandForSameRank :: [Card] -> Hand
+scoreHandForSameRank cards
+  | highestCountOfSameRank <= 1 `CardsOfValue` Face Ace =
+    HighCard $ value $ getHighCard cards
+  | highestCountOfSameRank >= 4 `CardsOfValue` Rank Two =
+    FourOfAKind (countedValue highestCountOfSameRank)
+  | highestCountOfSameRank >= 3 `CardsOfValue` Rank Two =
+    scoreThreeOfAKindOrFullHouse highestCountOfSameRank
+  | highestCountOfSameRank >= 2 `CardsOfValue` Rank Two =
+    scorePairOrTwoPair highestCountOfSameRank
   where
-    scoreThreeOfAKindOrFullHouse highestCount@(CountOfValue _ countedValue) cards =
-      case scoreHandByKind (filter ((countedValue /=) . value) cards) of
-        PairHand pair cards ->
-          FullHouse (asThreeOfAKind highestCount) pair cards
-        _ -> ThreeOfAKindHand (asThreeOfAKind highestCount) cards
-    scorePairOrTwoPair highestCount@(CountOfValue _ countedValue) cards =
-      case scoreHandByKind (filter ((countedValue /=) . value) cards) of
-        PairHand pair cards -> TwoPairHand (asPair highestCount) pair cards
-        _                   -> PairHand (asPair highestCount) cards
-    highestCountOfValue = findHighestCountOfValue cards
-    asFourOfAKind (CountOfValue _ value) =
-      FourOfAKind
-        value
-        (head matchingSuits)
-        (matchingSuits !! 1)
-        (matchingSuits !! 2)
-        (matchingSuits !! 3)
-    asThreeOfAKind (CountOfValue _ value) =
-      ThreeOfAKind
-        value
-        (head matchingSuits)
-        (matchingSuits !! 1)
-        (matchingSuits !! 2)
-    asPair (CountOfValue _ value) =
-      Pair value (head matchingSuits) (matchingSuits !! 1)
-    matchingSuitsForHighestCount (CountOfValue count countedValue) =
-      map suit $ filter (\card -> value card == countedValue) cards
-    matchingSuits = matchingSuitsForHighestCount highestCountOfValue
+    scoreThreeOfAKindOrFullHouse highestCount@(_ `CardsOfValue` v) =
+      case scoreHandForSameRank (cardsWithoutValue v) of
+        PairH pair -> FullHouse (toThreeOfAKind highestCount) pair
+        _          -> ThreeOfAKindH $ toThreeOfAKind highestCount
+    scorePairOrTwoPair highestCount@(_ `CardsOfValue` v) =
+      case scoreHandForSameRank (cardsWithoutValue v) of
+        PairH pair -> TwoPairH (toPair highestCount) pair
+        _          -> PairH $ toPair highestCount
+    cardsWithoutValue v = filter ((v /=) . value) cards
+    highestCountOfSameRank = findHighestCountOfSameRank cards
+    matchingSuitsFor (count `CardsOfValue` v) =
+      map suit $ filter (\card -> value card == v) cards
+    matchingSuits = matchingSuitsFor highestCountOfSameRank
+    toPair (_ `CardsOfValue` v) = Pair v suits2
+    toThreeOfAKind (_ `CardsOfValue` v) = ThreeOfAKind v suits3
+    suits2 = (head matchingSuits, matchingSuits !! 1)
+    suits3 = (head matchingSuits, matchingSuits !! 1, matchingSuits !! 2)
