@@ -62,18 +62,26 @@ tests =
               ])
            [])
     , TestLabel "We can detect the largest number of same-value cards :: 1 card" $
-      TestCase $ assertEqual "One card" (maxCountOfAnyRank [tenOfSpades]) 1
+      TestCase $
+      assertEqual
+        "One card"
+        (findHighestCountOfValue [tenOfSpades])
+        (CountOfValue 1 (Rank Ten))
     , TestLabel
         "We can detect the largest number of same-value cards :: 2 cards" $
       TestCase $
-      assertEqual "Two cards" (maxCountOfAnyRank [tenOfSpades, tenOfClubs]) 2
+      assertEqual
+        "Two cards"
+        (findHighestCountOfValue [tenOfSpades, tenOfClubs])
+        (CountOfValue 2 (Rank Ten))
     , TestLabel
         "We can detect the largest number of same-value cards :: 2 cards with noise" $
       TestCase $
       assertEqual
         "Two cards with noise"
-        (maxCountOfAnyRank [tenOfSpades, nineOfSpades, tenOfClubs, aceOfSpades])
-        2
+        (findHighestCountOfValue
+           [tenOfSpades, nineOfSpades, tenOfClubs, aceOfSpades])
+        (CountOfValue 2 (Rank Ten))
     ]
 
 main = runTestTT tests

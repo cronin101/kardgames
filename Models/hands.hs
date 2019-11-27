@@ -26,6 +26,17 @@ instance Ord FourOfAKind where
   compare (FourOfAKind valueA _ _ _ _) (FourOfAKind valueB _ _ _ _) =
     compare valueA valueB
 
+data CountOfValue =
+  CountOfValue
+    { count        :: Integer
+    , countedValue :: CardValue
+    }
+  deriving (Eq, Show, Read)
+
+instance Ord CountOfValue where
+  compare (CountOfValue countA _) (CountOfValue countB _) =
+    compare countA countB
+
 data Hand
   = HighCard
       { cards :: [Card]
@@ -65,15 +76,18 @@ data Hand
       }
   deriving (Eq, Ord, Show, Read)
 
-maxCountOfAnyRank :: [Card] -> Integer
-maxCountOfAnyRank cards
-  | null cards = 0
+findHighestCountOfValue :: [Card] -> CountOfValue
+findHighestCountOfValue cards
+  | null cards = CountOfValue 0 (Face Ace)
   | otherwise =
-    snd $ foldl checkForRunIncrease (0, 0, value $ head sorted) sorted
+    snd $
+    foldl checkForRunIncrease (initialCountOfValue, initialCountOfValue) sorted
   where
     sorted = sort cards
-    checkForRunIncrease (currentCount, maxCount, currentValue) nextCard
-      | currentValue == value nextCard =
-        (currentCount + 1, max maxCount (currentCount + 1), currentValue)
-      | otherwise = (1, maxCount, value nextCard)
-    snd (_, maxCount, _) = maxCount
+    initialCountOfValue = CountOfValue 0 (value (head sorted))
+    checkForRunIncrease (CountOfValue count countedValue, maxCountOfValue) nextCard
+      | countedValue == value nextCard =
+        (nextCountWhenMatching, max maxCountOfValue nextCountWhenMatching)
+      | otherwise = (CountOfValue 1 (value nextCard), maxCountOfValue)
+      where
+        nextCountWhenMatching = CountOfValue (count + 1) countedValue
