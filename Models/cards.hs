@@ -1,6 +1,8 @@
 module Models.Cards where
 
-data Rank
+import           Data.Ord
+
+data CardValue
   = Two
   | Three
   | Four
@@ -10,26 +12,14 @@ data Rank
   | Eight
   | Nine
   | Ten
-  deriving (Eq, Ord, Enum, Bounded, Show, Read)
-
-data Face
-  = Jack
+  | Jack
   | Queen
   | King
   | Ace
   deriving (Eq, Ord, Enum, Bounded, Show, Read)
 
-data CardValue
-  = Rank Rank
-  | Face Face
-  deriving (Eq, Ord, Show, Read)
-
-succCard (Rank Ten) = Face Jack
-succCard (Face Ace) = Rank Two
-succCard v =
-  case v of
-    Rank r -> Rank (succ r)
-    Face f -> Face (succ f)
+succCard Ace = Two
+succCard c   = succ c
 
 data Suit
   = Heart

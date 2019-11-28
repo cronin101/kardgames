@@ -54,7 +54,7 @@ data Hand
 makeRuns :: [Card] -> [[Card]]
 makeRuns cards = foldr growOrSplit [[]] (descendingCards ++ acesLow)
   where
-    acesLow = filter ((Face Ace ==) . value) descendingCards
+    acesLow = filter ((Ace ==) . value) descendingCards
     descendingCards = sortOn Data.Ord.Down cards
     growOrSplit e r
       | null $ head r = [[e]]
