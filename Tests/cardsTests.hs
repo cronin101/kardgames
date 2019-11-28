@@ -151,15 +151,28 @@ tests =
       TestCase $
       assertEqual
         "straight flush"
-        (head
-           (makeStraights
-              [ Card Heart King
-              , Card Heart Ace
-              , Card Heart Queen
-              , Card Heart Jack
-              , Card Heart Ten
-              ]))
+        (head $
+         makeStraights
+           [ Card Heart King
+           , Card Heart Ace
+           , Card Heart Queen
+           , Card Heart Jack
+           , Card Heart Ten
+           ])
         (StraightFlush Heart Ace)
+    , TestLabel "It can recognise a flush" $
+      TestCase $
+      assertEqual
+        "flush"
+        (head $
+         makeFlushes
+           [ Card Spade Two
+           , Card Spade Ten
+           , Card Spade Five
+           , Card Spade Queen
+           , Card Spade Four
+           ])
+        (Flush Spade Queen)
     ]
 
 main = runTestTT tests

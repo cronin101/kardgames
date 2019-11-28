@@ -1,5 +1,6 @@
 module Models.Hands where
 
+import           Data.Function
 import           Data.List
 import           Data.Ord
 import           Models.Cards
@@ -76,6 +77,15 @@ makeStraights cards =
       where
         groupedByFlush = sortOn Data.Ord.Down $ head (groupBy equalSuit run)
         equalSuit x y = suit x == suit y
+
+makeFlushes :: [Card] -> [Hand]
+makeFlushes cards =
+  map (toFlush . head . sortOn Data.Ord.Down) $
+  filter ((>= 5) . length) $
+  map (\s -> filter (\card -> suit card == s) cards) suits
+  where
+    toFlush card = Flush (suit card) (value card)
+    suits = enumFrom $ toEnum 0 :: [Suit]
 
 descendingStrengthCardsOfValue :: [Card] -> [CardsOfValue]
 descendingStrengthCardsOfValue =
