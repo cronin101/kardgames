@@ -29,7 +29,7 @@ tests =
         "Same three cards on the table"
         (deal $ TableState NoTableCards [tenOfSpades, tenOfHearts, nineOfSpades])
         (TableState
-           (arrangeTableCards [tenOfSpades, tenOfHearts, nineOfSpades])
+           (cardsToCardState [tenOfSpades, tenOfHearts, nineOfSpades])
            [])
     , TestLabel "Dealing turns an flop into a turn" $
       TestCase $
@@ -37,10 +37,10 @@ tests =
         "Same four cards on the table"
         (deal $
          TableState
-           (arrangeTableCards [tenOfSpades, tenOfHearts, nineOfSpades])
+           (cardsToCardState [tenOfSpades, tenOfHearts, nineOfSpades])
            [tenOfDiamonds])
         (TableState
-           (arrangeTableCards
+           (cardsToCardState
               [tenOfSpades, tenOfHearts, nineOfSpades, tenOfDiamonds])
            [])
     , TestLabel "Dealing turns an turn into a river" $
@@ -49,11 +49,11 @@ tests =
         "Same five cards on the table"
         (deal $
          TableState
-           (arrangeTableCards
+           (cardsToCardState
               [tenOfSpades, tenOfHearts, nineOfSpades, tenOfDiamonds])
            [tenOfClubs])
         (TableState
-           (arrangeTableCards
+           (cardsToCardState
               [ tenOfSpades
               , tenOfHearts
               , nineOfSpades

@@ -69,7 +69,6 @@ makeStraights :: [Card] -> [Hand]
 makeStraights cards =
   map makeStraightOrStraightFlush $ filter ((>= 5) . length) (makeRuns cards)
   where
-    makeStraightOrStraightFlush :: [Card] -> Hand
     makeStraightOrStraightFlush run
       | length groupedByFlush == 5 =
         StraightFlush (suit $ head groupedByFlush) (value $ head groupedByFlush)

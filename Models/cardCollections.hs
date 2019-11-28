@@ -24,7 +24,7 @@ data River =
     }
   deriving (Show, Read, Eq)
 
-data TableCards
+data CardState
   = NoTableCards
   | PostFlop
       { flop :: Flop
@@ -39,7 +39,7 @@ data TableCards
 
 data TableState =
   TableState
-    { visibleCards :: TableCards
+    { visibleCards :: CardState
     , deck         :: [Card]
     }
   deriving (Show, Read, Eq)
@@ -48,28 +48,28 @@ deal :: TableState -> TableState
 deal ts =
   case ts of
     TableState NoTableCards deck ->
-      TableState (arrangeTableCards $ take 3 deck) $ drop 3 deck
+      TableState (cardsToCardState $ take 3 deck) $ drop 3 deck
     TableState flopOrTurn deck -> dealOne flopOrTurn deck
   where
-    dealOne tableCards deck =
+    dealOne tableCards (newCard:restOfDeck) =
       TableState
-        (arrangeTableCards $ sequenceTableCards tableCards ++ [head deck]) $
-      drop 1 deck
+        (cardsToCardState $ cardStateToCards tableCards ++ [newCard])
+        restOfDeck
 
-arrangeTableCards :: [Card] -> TableCards
-arrangeTableCards cards
-  | length cards < 3 = NoTableCards
-  | length cards == 3 = PostFlop $ Flop (head cards) (cards !! 1) (cards !! 2)
-  | length cards == 4 =
-    PostTurn $ Turn (flop . arrangeTableCards $ take 3 cards) (cards !! 3)
-  | length cards == 5 =
-    PostRiver $ River (turn . arrangeTableCards $ take 4 cards) (cards !! 4)
-  | otherwise = NoTableCards
+cardsToCardState :: [Card] -> CardState
+cardsToCardState cards =
+  case reverse cards of
+    [c3, c2, c1]       -> PostFlop $ Flop c1 c2 c3
+    c4:cs@[_, _, _]    -> PostTurn $ Turn (flop . cardsToCardState $ cs) c4
+    c5:cs@[_, _, _, _] -> PostRiver $ River (turn . cardsToCardState $ cs) c5
+    _                  -> NoTableCards
 
-sequenceTableCards :: TableCards -> [Card]
-sequenceTableCards tableCards =
-  case tableCards of
-    NoTableCards              -> []
-    PostFlop (Flop c1 c2 c3)  -> [c1, c2, c3]
-    PostTurn (Turn flop c4)   -> sequenceTableCards (PostFlop flop) ++ [c4]
-    PostRiver (River turn c5) -> sequenceTableCards (PostTurn turn) ++ [c5]
+cardStateToCards :: CardState -> [Card]
+cardStateToCards = reverse . cardStateToReversedCards
+  where
+    cardStateToReversedCards cardState =
+      case cardState of
+        NoTableCards              -> []
+        PostFlop (Flop c1 c2 c3)  -> [c3, c2, c1]
+        PostTurn (Turn flop c4)   -> c4 : cardStateToCards (PostFlop flop)
+        PostRiver (River turn c5) -> c5 : cardStateToCards (PostTurn turn)
