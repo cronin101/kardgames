@@ -111,5 +111,5 @@ scoreHandForSameRank cards =
     1 `CardsOfValue` v:_ -> HighCard v
   where
     suitsFor v = map suit $ filter ((== v) . value) cards
-    arrayToT2 a = (head a, a !! 1)
-    arrayToT3 a = (head a, a !! 1, a !! 2)
+    arrayToT2 [x, y] = (x, y)
+    arrayToT3 [x, y, z] = (x, y, z)
