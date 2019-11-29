@@ -70,10 +70,10 @@ makeStraights :: [Card] -> [Hand]
 makeStraights cards =
   map makeStraightOrStraightFlush $ filter ((>= 5) . length) (makeRuns cards)
   where
-    makeStraightOrStraightFlush run
-      | length groupedByFlush == 5 =
-        StraightFlush (suit $ head groupedByFlush) (value $ head groupedByFlush)
-      | otherwise = Straight (value $ head run)
+    makeStraightOrStraightFlush run =
+      case groupedByFlush of
+        [highCard, _, _, _, _] -> StraightFlush (suit highCard) (value highCard)
+        _ -> Straight (value $ head run)
       where
         groupedByFlush = sortOn Data.Ord.Down $ head (groupBy equalSuit run)
         equalSuit x y = suit x == suit y
@@ -91,7 +91,7 @@ descendingStrengthCardsOfValue :: [Card] -> [CardsOfValue]
 descendingStrengthCardsOfValue =
   sortOn Data.Ord.Down . map toCardsOfValue . group . sort . map value
   where
-    toCardsOfValue cs = length cs `CardsOfValue` head cs
+    toCardsOfValue vs@(v:_) = length vs `CardsOfValue` v
 
 scoreHandForSameRank :: [Card] -> Hand
 scoreHandForSameRank cards =
