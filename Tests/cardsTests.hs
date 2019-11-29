@@ -165,6 +165,31 @@ tests =
         "high card"
         (scoreHand [Card Spade Ace, Card Heart King])
         (HighCard Ace)
+    , TestLabel "It can score a Five High straight flush" $
+      TestCase $
+      assertEqual
+        "five high straight flush"
+        (scoreHand
+           [ Card Heart Ace
+           , Card Heart Four
+           , Card Heart Three
+           , Card Heart Two
+           , Card Heart Five
+           ])
+        (StraightFlush Heart Five)
+    , TestLabel "It can score a straight flush over a higher straight" $
+      TestCase $
+      assertEqual
+        "Seven high straight, six high straight flush"
+        (scoreHand
+           [ Card Spade Seven
+           , Card Heart Four
+           , Card Heart Three
+           , Card Heart Two
+           , Card Heart Five
+           , Card Heart Six
+           ])
+        (StraightFlush Heart Six)
     ]
 
 main = runTestTT tests

@@ -52,8 +52,11 @@ data Hand
       }
   deriving (Eq, Ord, Show, Read)
 
-makeRuns :: [Card] -> [[Card]]
-makeRuns cards = foldr growOrSplit [[]] (descendingCards ++ acesLow)
+makeRunsOfFive :: [Card] -> [[Card]]
+makeRunsOfFive cards =
+  filter ((== 5) . length) $
+  concatMap (map (take 5) . tails) $
+  foldr growOrSplit [[]] (descendingCards ++ acesLow)
   where
     acesLow = filter ((Ace ==) . value) descendingCards
     descendingCards = sortOn Data.Ord.Down cards
@@ -67,15 +70,14 @@ makeRuns cards = foldr growOrSplit [[]] (descendingCards ++ acesLow)
         startValue = value $ head $ head r
 
 makeStraights :: [Card] -> [Hand]
-makeStraights cards =
-  map makeStraightOrStraightFlush $ filter ((>= 5) . length) (makeRuns cards)
+makeStraights cards = map matchRun $ makeRunsOfFive cards
   where
-    makeStraightOrStraightFlush run =
+    matchRun run =
       case groupedByFlush of
         [highCard, _, _, _, _] -> StraightFlush (suit highCard) (value highCard)
         _ -> Straight (value $ head run)
       where
-        groupedByFlush = sortOn Data.Ord.Down $ head (groupBy equalSuit run)
+        groupedByFlush = head (groupBy equalSuit run)
         equalSuit x y = suit x == suit y
 
 makeFlushes :: [Card] -> [Hand]

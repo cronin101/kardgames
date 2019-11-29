@@ -78,3 +78,13 @@ cardStateToCards = reverse . cardStateToReversedCards
         PostFlop (Flop c1 c2 c3)  -> [c3, c2, c1]
         PostTurn (Turn flop c4)   -> c4 : cardStateToCards (PostFlop flop)
         PostRiver (River turn c5) -> c5 : cardStateToCards (PostTurn turn)
+
+calculateHandStrength :: TableState -> Hole -> HandStrength
+calculateHandStrength ts h =
+  case ts of
+    TableState riverState@(PostRiver _) _ ->
+      Final (scoreHand (cardStateToCards riverState ++ getHole h)) h
+    TableState cardState _ ->
+      Provisional (scoreHand (cardStateToCards cardState ++ getHole h)) h
+  where
+    getHole (Hole a b) = [a, b]
