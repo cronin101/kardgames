@@ -1,6 +1,7 @@
-module Models.CardCollections where
+module Models.CardState where
 
 import           Models.Cards
+import           Models.Hands
 
 data Hole =
   Hole Card Card
@@ -43,6 +44,10 @@ data TableState =
     , deck         :: [Card]
     }
   deriving (Show, Read, Eq)
+
+data HandStrength
+  = Provisional Hand Hole
+  | Final Hand Hole
 
 deal :: TableState -> TableState
 deal ts =

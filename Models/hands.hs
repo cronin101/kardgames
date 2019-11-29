@@ -5,12 +5,12 @@ import           Data.List
 import           Data.Ord
 import           Models.Cards
 
-data Pair =
-  Pair CardValue (Suit, Suit)
+newtype Pair =
+  Pair CardValue
   deriving (Eq, Show, Read, Ord)
 
-data ThreeOfAKind =
-  ThreeOfAKind CardValue (Suit, Suit, Suit)
+newtype ThreeOfAKind =
+  ThreeOfAKind CardValue
   deriving (Eq, Show, Read, Ord)
 
 data CardsOfValue =
@@ -89,27 +89,22 @@ makeFlushes cards =
 
 descendingStrengthCardsOfValue :: [Card] -> [CardsOfValue]
 descendingStrengthCardsOfValue =
-  map toCardsOfValue . group . sortOn Data.Ord.Down
+  sortOn Data.Ord.Down . map toCardsOfValue . group . sort . map value
   where
-    toCardsOfValue cs = length cs `CardsOfValue` value (head cs)
+    toCardsOfValue cs = length cs `CardsOfValue` head cs
 
 scoreHandForSameRank :: [Card] -> Hand
 scoreHandForSameRank cards =
   case descendingStrengthCardsOfValue cards of
     4 `CardsOfValue` v:_ -> FourOfAKind v
     3 `CardsOfValue` v3:2 `CardsOfValue` v2:_ ->
-      FullHouse
-        (ThreeOfAKind v3 (arrayToT3 $ suitsFor v3))
-        (Pair v2 (arrayToT2 $ suitsFor v2))
-    3 `CardsOfValue` v:_ ->
-      ThreeOfAKindH $ ThreeOfAKind v (arrayToT3 $ suitsFor v)
-    2 `CardsOfValue` v1:2 `CardsOfValue` v2:_ ->
-      TwoPairH
-        (Pair v1 (arrayToT2 $ suitsFor v1))
-        (Pair v2 (arrayToT2 $ suitsFor v2))
-    2 `CardsOfValue` v:_ -> PairH $ Pair v (arrayToT2 $ suitsFor v)
+      FullHouse (ThreeOfAKind v3) (Pair v2)
+    3 `CardsOfValue` v:_ -> ThreeOfAKindH $ ThreeOfAKind v
+    2 `CardsOfValue` v1:2 `CardsOfValue` v2:_ -> TwoPairH (Pair v1) (Pair v2)
+    2 `CardsOfValue` v:_ -> PairH $ Pair v
     1 `CardsOfValue` v:_ -> HighCard v
+
+scoreHand :: [Card] -> Hand
+scoreHand cards = maximum $ concatMap ($ cards) scorers
   where
-    suitsFor v = map suit $ filter ((== v) . value) cards
-    arrayToT2 [x, y] = (x, y)
-    arrayToT3 [x, y, z] = (x, y, z)
+    scorers = [(: []) . scoreHandForSameRank, makeStraights, makeFlushes]

@@ -1,7 +1,7 @@
 module CardsTests where
 
-import           Models.CardCollections
 import           Models.Cards
+import           Models.CardState
 import           Models.Hands
 import           Test.HUnit
 
@@ -67,25 +67,17 @@ tests =
     , TestLabel "Higher card beats high card" $
       TestCase $ assert $ HighCard Ace > HighCard King
     , TestLabel "Pair beats high card" $
-      TestCase $ assert $ PairH (Pair King (Heart, Diamond)) > HighCard Ace
+      TestCase $ assert $ PairH (Pair King) > HighCard Ace
     , TestLabel "Higher pair beats pair" $
-      TestCase $
-      assert $
-      PairH (Pair Ace (Heart, Diamond)) > PairH (Pair King (Heart, Diamond))
+      TestCase $ assert $ PairH (Pair Ace) > PairH (Pair King)
     , TestLabel "Triple beats pair" $
-      TestCase $
-      assert $
-      ThreeOfAKindH (ThreeOfAKind King (Heart, Diamond, Spade)) >
-      PairH (Pair Ace (Heart, Diamond))
+      TestCase $ assert $ ThreeOfAKindH (ThreeOfAKind King) > PairH (Pair Ace)
     , TestLabel "Higher triple beats triple" $
       TestCase $
       assert $
-      ThreeOfAKindH (ThreeOfAKind Ace (Heart, Diamond, Spade)) >
-      ThreeOfAKindH (ThreeOfAKind King (Heart, Diamond, Spade))
+      ThreeOfAKindH (ThreeOfAKind Ace) > ThreeOfAKindH (ThreeOfAKind King)
     , TestLabel "Straight beats triple" $
-      TestCase $
-      assert $
-      Straight King > ThreeOfAKindH (ThreeOfAKind Ace (Heart, Diamond, Spade))
+      TestCase $ assert $ Straight King > ThreeOfAKindH (ThreeOfAKind Ace)
     , TestLabel "Higher straight beats straight" $
       TestCase $ assert $ Straight Ace > Straight King
     , TestLabel "Flush beats straight" $
@@ -94,27 +86,15 @@ tests =
       TestCase $ assert $ Flush Heart Ace > Flush Heart King
     , TestLabel "Full house beats flush" $
       TestCase $
-      assert $
-      FullHouse
-        (ThreeOfAKind King (Heart, Diamond, Spade))
-        (Pair Queen (Heart, Diamond)) >
-      Flush Heart King
+      assert $ FullHouse (ThreeOfAKind King) (Pair Queen) > Flush Heart King
     , TestLabel "Higher full house beats full house" $
       TestCase $
       assert $
-      FullHouse
-        (ThreeOfAKind Ace (Heart, Diamond, Spade))
-        (Pair King (Heart, Diamond)) >
-      FullHouse
-        (ThreeOfAKind King (Heart, Diamond, Spade))
-        (Pair Queen (Heart, Diamond))
+      FullHouse (ThreeOfAKind Ace) (Pair King) >
+      FullHouse (ThreeOfAKind King) (Pair Queen)
     , TestLabel "Four of a kind beats full house" $
       TestCase $
-      assert $
-      FourOfAKind Ten >
-      FullHouse
-        (ThreeOfAKind King (Heart, Diamond, Spade))
-        (Pair Queen (Heart, Diamond))
+      assert $ FourOfAKind Ten > FullHouse (ThreeOfAKind King) (Pair Queen)
     , TestLabel "Higher four of a kind beats four of a kind" $
       TestCase $ assert $ FourOfAKind Ace > FourOfAKind King
     , TestLabel "Straight flush beats four of a kind" $
@@ -173,6 +153,18 @@ tests =
            , Card Spade Four
            ])
         (Flush Spade Queen)
+    , TestLabel "It can score a pocket pair" $
+      TestCase $
+      assertEqual
+        "pocket pair"
+        (scoreHand [Card Spade King, Card Heart King])
+        (PairH $ Pair King)
+    , TestLabel "It can score high card" $
+      TestCase $
+      assertEqual
+        "high card"
+        (scoreHand [Card Spade Ace, Card Heart King])
+        (HighCard Ace)
     ]
 
 main = runTestTT tests
